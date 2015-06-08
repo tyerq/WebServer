@@ -85,8 +85,7 @@ public class HttpRequest implements ServletRequest{
 
 			headers = new HashMap<String, String[]>();
 			parameters = new HashMap<String, String[]>();
-			int i=0;
-			while (!(line = buffer.readLine()).isEmpty()) {
+			while ((line =  buffer.readLine()) != null && !line.isEmpty()) {
 				//System.err.println("---" + (++i) + ") inside while(true)----");
 
 				/*line = buffer.readLine();
@@ -105,13 +104,8 @@ public class HttpRequest implements ServletRequest{
 			}
 			//System.err.println("---ended while----");
 
-			if(method=="GET" && uri.indexOf('?')!=-1){
+			if(method=="GET" && uri.indexOf('?')!=-1)
 				parseParameters(uri.substring(uri.indexOf('?')));
-			}
-			
-			System.out.println("!!!!Got a request:");
-			System.out.println(raw.toString());
-			System.out.println();
 			
 			
 			//buffer.close();

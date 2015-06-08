@@ -14,8 +14,8 @@ public class StaticResourseRequestProcessor implements RequestProcessor {
 		resp.generateStatusLine();
 		resp.generateHeaders();
 		try {
-			//System.err.println(new File(req.getUri().substring(1)).getAbsolutePath());
-			resp.sendStaticResource(req.getUri().substring(1));
+			//System.err.println(new File("WebContent" + req.getUri().substring(3)).getAbsolutePath());
+			resp.sendStaticResource("WebContent" + req.getUri().substring(3));
 		} catch (FileNotFoundException e) {
 			//e.printStackTrace();
 			resp.clear();

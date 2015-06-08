@@ -1,0 +1,4 @@
+/->servlet.IndexServlet
+/hello->servlet.HelloServlet
+/forum->servlet.PostServlet
+/notes->servlet.NoteServlet

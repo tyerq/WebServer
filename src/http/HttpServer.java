@@ -36,27 +36,31 @@ public class HttpServer {
 	}
 
 	protected void run() {
-		System.out.println("Server running ...");
+		System.out.println("Server running ...\n");
 
+		int i = 0;
 		while (true) {
 			try {
 				System.out.println("Waiting for a connection ...");
 				Socket socket = server.accept();
-				
-				System.out.println("\nGot a connection with " + socket.getInetAddress() + '\n');
+
+				System.out.println("\n" + ++i + ". Got a connection with "
+						+ socket.getInetAddress().toString());
 
 				HttpRequest req = new HttpRequest(socket.getInputStream());
 				HttpResponse resp = new HttpResponse(socket.getOutputStream());
 
 				RequestProcessor processor;
 
-				if (req.getUri().startsWith("/servlet/")) {
-					processor = new ServletRequestProcessor();
-				} else {
+				if (req != null && req.getUri().startsWith("/st/")) {
 					processor = new StaticResourseRequestProcessor();
+				} else {
+					processor = new ServletRequestProcessor();
 				}
 
 				processor.process(req, resp);
+
+				System.out.println("Succcesfully sent a responce." + '\n');
 
 				socket.close();
 			} catch (IOException e) {
