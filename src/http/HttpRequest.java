@@ -6,78 +6,165 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
-import javax.servlet.ReadListener;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.apache.jasper.tagplugins.jstl.core.Catch;
+public class HttpRequest implements ServletRequest{
 
-public class HttpRequest implements ServletRequest {
+	private StringBuilder raw;
 
-	private InputStream input;
-	/**
-	 * request method: 0 = GET; 1 = POST
-	 */
-	private int method;
+	private String method;
 	private String uri;
 	private String protocol;
+	private Map<String, String[]> headers;
+	private Map<String, String[]> parameters;
 
+	
+	public String getRaw() {
+		return raw.toString();
+	}
+	
+	
+	public String getMethod() {
+		return method;
+	}
+
+	public String getUri() {
+		return uri;
+	}
+
+	public String getProtocol() {
+		return protocol;
+	}
+
+	public Map<String, String[]> getHeaderMap() {
+		return headers;
+	}
+	public String getHeader(String name) {
+		return headers.get(name)[0];
+	}
+	
+	@Override
+	public Map<String, String[]> getParameterMap() {
+		return parameters;
+	}
+	public String getParameter(String name) {
+		return parameters.get(name)[0];
+	}
+
+	@Override
+	public Enumeration<String> getParameterNames() {
+		return (Enumeration<String>) parameters.keySet();
+	}
+
+	@Override
+	public String[] getParameterValues(String arg0) {
+		return parameters.values().toArray(new String[0]);
+	}
+	
 	public HttpRequest(InputStream input) {
-		this.input = input;
+		//System.err.println("---inside request----");
+		
+		raw = new StringBuilder();
+
 		BufferedReader buffer = new BufferedReader(new InputStreamReader(input));
-		String line = null;
 		try {
-			line = buffer.readLine();
-			switch (line.substring(0, line.indexOf("/"))) {
-			case "GET ":
-				method = 0;
-				break;
-			case "POST ":
-				method = 1;
-				break;
-			default:
-				method = 0;
+			String line = buffer.readLine();
+			raw.append(line + "\n");
+
+			parseStatusLine(line);
+
+			headers = new HashMap<String, String[]>();
+			parameters = new HashMap<String, String[]>();
+			int i=0;
+			while (!(line = buffer.readLine()).isEmpty()) {
+				//System.err.println("---" + (++i) + ") inside while(true)----");
+
+				/*line = buffer.readLine();
+				if (line == null)
+					break;*/
+				//System.err.println(line);
+				raw.append(line + "\n");
+
+				if (line.contains(": "))
+					parseHeaders(line);
+				else
+					if(method=="POST" && line.contains("="))
+						parseParameters(line);
+				//System.err.println("---" + i + ") next iteration----");
+
 			}
-			line = line.substring(line.indexOf("/"));
+			//System.err.println("---ended while----");
+
+			if(method=="GET" && uri.indexOf('?')!=-1){
+				parseParameters(uri.substring(uri.indexOf('?')));
+			}
+			
+			System.out.println("!!!!Got a request:");
+			System.out.println(raw.toString());
+			System.out.println();
+			
+			
+			//buffer.close();
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	private void parseStatusLine(String line) {
+		if(line==null || line.isEmpty()){
+			return;
+		}
+		
+		try {
+			method = line.substring(0, line.indexOf("/") - 1);
+			line = line.substring(line.indexOf("/"));
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("Something wrong with your request header :(");
 			e.printStackTrace();
 		}
-		
+
 		uri = line.substring(0, line.indexOf(' ', line.indexOf(" ")));
 		protocol = line.substring(line.indexOf(' ', line.indexOf(" ")));
 	}
 
-	@Override
-	public ServletInputStream getInputStream() throws IOException {
-		return (ServletInputStream) input;
+	private void parseHeaders(String line) {
+		if(line==null || line.isEmpty()){
+			return;
+		}
+		String name = line.substring(0, line.indexOf(':'));
+		String[] values = line.substring(name.length() + 2).split(",");
+		headers.put(name, values);
 	}
 
-	@Override
-	public String getProtocol() {
-		return protocol;
-	}
+	private void parseParameters(String line) {
+		if(line==null || line.isEmpty() || line.indexOf('=') == -1){
+			return;
+		}
+		String[] params = line.split("&");
+		for(String param : params){
+			int dev = param.indexOf('=');
+			parameters.put(param.substring(0, dev), param.substring(dev+1).split(","));
+		}
+	}	
 	
-	/*
-	 * -------- NOT IMPLEMENTED YET --------
-	 */
-
 	@Override
 	public AsyncContext getAsyncContext() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public Object getAttribute(String arg0) {
@@ -85,11 +172,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public Enumeration<String> getAttributeNames() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public String getCharacterEncoding() {
@@ -97,11 +186,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public int getContentLength() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
 
 	@Override
 	public long getContentLengthLong() {
@@ -109,11 +200,13 @@ public class HttpRequest implements ServletRequest {
 		return 0;
 	}
 
+
 	@Override
 	public String getContentType() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public DispatcherType getDispatcherType() {
@@ -121,11 +214,20 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
+	@Override
+	public ServletInputStream getInputStream() throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 	@Override
 	public String getLocalAddr() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public String getLocalName() {
@@ -133,11 +235,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public int getLocalPort() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
 
 	@Override
 	public Locale getLocale() {
@@ -145,32 +249,9 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public Enumeration<Locale> getLocales() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getParameter(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<String, String[]> getParameterMap() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Enumeration<String> getParameterNames() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String[] getParameterValues(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -181,11 +262,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public String getRealPath(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public String getRemoteAddr() {
@@ -193,11 +276,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public String getRemoteHost() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public int getRemotePort() {
@@ -205,11 +290,13 @@ public class HttpRequest implements ServletRequest {
 		return 0;
 	}
 
+
 	@Override
 	public RequestDispatcher getRequestDispatcher(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public String getScheme() {
@@ -217,11 +304,13 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public String getServerName() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public int getServerPort() {
@@ -229,11 +318,13 @@ public class HttpRequest implements ServletRequest {
 		return 0;
 	}
 
+
 	@Override
 	public ServletContext getServletContext() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public boolean isAsyncStarted() {
@@ -241,11 +332,13 @@ public class HttpRequest implements ServletRequest {
 		return false;
 	}
 
+
 	@Override
 	public boolean isAsyncSupported() {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
 
 	@Override
 	public boolean isSecure() {
@@ -253,24 +346,28 @@ public class HttpRequest implements ServletRequest {
 		return false;
 	}
 
+
 	@Override
 	public void removeAttribute(String arg0) {
 		// TODO Auto-generated method stub
-
+		
 	}
+
 
 	@Override
 	public void setAttribute(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
-
+		
 	}
+
 
 	@Override
 	public void setCharacterEncoding(String arg0)
 			throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
-
+		
 	}
+
 
 	@Override
 	public AsyncContext startAsync() throws IllegalStateException {
@@ -278,11 +375,11 @@ public class HttpRequest implements ServletRequest {
 		return null;
 	}
 
+
 	@Override
 	public AsyncContext startAsync(ServletRequest arg0, ServletResponse arg1)
 			throws IllegalStateException {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }
