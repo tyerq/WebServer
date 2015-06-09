@@ -37,7 +37,7 @@ public class ServletRequestProcessor implements RequestProcessor {
 		try {
 			BufferedReader buffer = new BufferedReader(new FileReader(new File(
 					servletUrls)));
-
+			System.out.println("ServletReqProc: looking for " + uri);
 			String line;
 			while ((line = buffer.readLine()) != null) {
 				String[] uriToServlet = line.split("->");

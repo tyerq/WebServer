@@ -18,7 +18,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-public class HttpRequest implements ServletRequest{
+public class HttpRequest implements ServletRequest {
 
 	private StringBuilder raw;
 
@@ -28,12 +28,10 @@ public class HttpRequest implements ServletRequest{
 	private Map<String, String[]> headers;
 	private Map<String, String[]> parameters;
 
-	
 	public String getRaw() {
 		return raw.toString();
 	}
-	
-	
+
 	public String getMethod() {
 		return method;
 	}
@@ -49,14 +47,16 @@ public class HttpRequest implements ServletRequest{
 	public Map<String, String[]> getHeaderMap() {
 		return headers;
 	}
+
 	public String getHeader(String name) {
 		return headers.get(name)[0];
 	}
-	
+
 	@Override
 	public Map<String, String[]> getParameterMap() {
 		return parameters;
 	}
+
 	public String getParameter(String name) {
 		return parameters.get(name)[0];
 	}
@@ -70,10 +70,10 @@ public class HttpRequest implements ServletRequest{
 	public String[] getParameterValues(String arg0) {
 		return parameters.values().toArray(new String[0]);
 	}
-	
+
 	public HttpRequest(InputStream input) {
-		//System.err.println("---inside request----");
-		
+		// System.err.println("---inside request----");
+
 		raw = new StringBuilder();
 
 		BufferedReader buffer = new BufferedReader(new InputStreamReader(input));
@@ -85,30 +85,32 @@ public class HttpRequest implements ServletRequest{
 
 			headers = new HashMap<String, String[]>();
 			parameters = new HashMap<String, String[]>();
-			while ((line =  buffer.readLine()) != null && !line.isEmpty()) {
-				//System.err.println("---" + (++i) + ") inside while(true)----");
+			while ((line = buffer.readLine()) != null && !line.isEmpty()) {
+				// System.err.println("---" + (++i) +
+				// ") inside while(true)----");
 
-				/*line = buffer.readLine();
-				if (line == null)
-					break;*/
-				//System.err.println(line);
+				// System.err.println(line);
 				raw.append(line + "\n");
 
-				if (line.contains(": "))
-					parseHeaders(line);
-				else
-					if(method=="POST" && line.contains("="))
-						parseParameters(line);
-				//System.err.println("---" + i + ") next iteration----");
-
+				parseHeaders(line);
+				// System.err.println("---" + i + ") next iteration----");
 			}
-			//System.err.println("---ended while----");
+			// System.err.println("---ended while----");
 
-			if(method=="GET" && uri.indexOf('?')!=-1)
-				parseParameters(uri.substring(uri.indexOf('?')));
-			
-			
-			//buffer.close();
+			if (method == "GET") {
+				int uriEnd = uri.indexOf('?');
+				if (uriEnd > -1) {
+					parseParameters(uri.substring(uri.indexOf('?') + 1));
+					uri = uri.substring(0, uriEnd);
+					System.out.println("reqUri: " + uri);
+				}
+			} else if (line != null)
+				if (headers.get("Content-Length") != null) {
+					char[] params = new char[Integer.valueOf(headers
+							.get("Content-Length")[0])];
+					buffer.read(params);
+					parseParameters(new String(params));
+				}
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -117,10 +119,10 @@ public class HttpRequest implements ServletRequest{
 	}
 
 	private void parseStatusLine(String line) {
-		if(line==null || line.isEmpty()){
+		if (line == null || line.isEmpty()) {
 			return;
 		}
-		
+
 		try {
 			method = line.substring(0, line.indexOf("/") - 1);
 			line = line.substring(line.indexOf("/"));
@@ -134,7 +136,7 @@ public class HttpRequest implements ServletRequest{
 	}
 
 	private void parseHeaders(String line) {
-		if(line==null || line.isEmpty()){
+		if (line == null || line.isEmpty()) {
 			return;
 		}
 		String name = line.substring(0, line.indexOf(':'));
@@ -143,22 +145,24 @@ public class HttpRequest implements ServletRequest{
 	}
 
 	private void parseParameters(String line) {
-		if(line==null || line.isEmpty() || line.indexOf('=') == -1){
+		if (line == null || line.isEmpty() || line.indexOf('=') == -1) {
 			return;
 		}
 		String[] params = line.split("&");
-		for(String param : params){
+		for (String param : params) {
 			int dev = param.indexOf('=');
-			parameters.put(param.substring(0, dev), param.substring(dev+1).split(","));
+			// System.err.println("req: " + param.substring(0, dev)+ ": " +
+			// param.substring(dev + 1));
+			parameters.put(param.substring(0, dev), param.substring(dev + 1)
+					.split(","));
 		}
-	}	
-	
+	}
+
 	@Override
 	public AsyncContext getAsyncContext() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public Object getAttribute(String arg0) {
@@ -166,13 +170,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public Enumeration<String> getAttributeNames() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public String getCharacterEncoding() {
@@ -180,13 +182,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public int getContentLength() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
 
 	@Override
 	public long getContentLengthLong() {
@@ -194,13 +194,11 @@ public class HttpRequest implements ServletRequest{
 		return 0;
 	}
 
-
 	@Override
 	public String getContentType() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public DispatcherType getDispatcherType() {
@@ -208,13 +206,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public ServletInputStream getInputStream() throws IOException {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public String getLocalAddr() {
@@ -222,13 +218,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public String getLocalName() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public int getLocalPort() {
@@ -236,13 +230,11 @@ public class HttpRequest implements ServletRequest{
 		return 0;
 	}
 
-
 	@Override
 	public Locale getLocale() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public Enumeration<Locale> getLocales() {
@@ -256,13 +248,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public String getRealPath(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public String getRemoteAddr() {
@@ -270,13 +260,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public String getRemoteHost() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public int getRemotePort() {
@@ -284,13 +272,11 @@ public class HttpRequest implements ServletRequest{
 		return 0;
 	}
 
-
 	@Override
 	public RequestDispatcher getRequestDispatcher(String arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public String getScheme() {
@@ -298,13 +284,11 @@ public class HttpRequest implements ServletRequest{
 		return null;
 	}
 
-
 	@Override
 	public String getServerName() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public int getServerPort() {
@@ -312,13 +296,11 @@ public class HttpRequest implements ServletRequest{
 		return 0;
 	}
 
-
 	@Override
 	public ServletContext getServletContext() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public boolean isAsyncStarted() {
@@ -326,13 +308,11 @@ public class HttpRequest implements ServletRequest{
 		return false;
 	}
 
-
 	@Override
 	public boolean isAsyncSupported() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 
 	@Override
 	public boolean isSecure() {
@@ -340,35 +320,30 @@ public class HttpRequest implements ServletRequest{
 		return false;
 	}
 
-
 	@Override
 	public void removeAttribute(String arg0) {
 		// TODO Auto-generated method stub
-		
-	}
 
+	}
 
 	@Override
 	public void setAttribute(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
-		
-	}
 
+	}
 
 	@Override
 	public void setCharacterEncoding(String arg0)
 			throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
-		
-	}
 
+	}
 
 	@Override
 	public AsyncContext startAsync() throws IllegalStateException {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public AsyncContext startAsync(ServletRequest arg0, ServletResponse arg1)
