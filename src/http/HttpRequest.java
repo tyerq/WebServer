@@ -97,7 +97,7 @@ public class HttpRequest implements ServletRequest {
 			}
 			// System.err.println("---ended while----");
 
-			if (method == "GET") {
+			if (method.equals("GET")) {
 				int uriEnd = uri.indexOf('?');
 				if (uriEnd > -1) {
 					parseParameters(uri.substring(uri.indexOf('?') + 1));

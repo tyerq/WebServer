@@ -37,11 +37,12 @@ public class ServletRequestProcessor implements RequestProcessor {
 		try {
 			BufferedReader buffer = new BufferedReader(new FileReader(new File(
 					servletUrls)));
-			System.out.println("ServletReqProc: looking for " + uri);
+			int servletUriLimit = uri.indexOf('/', 1)<0 ? uri.length() : uri.indexOf('/', 1);
+			System.out.println("ServletReqProc: looking for " + uri.substring(0, servletUriLimit));
 			String line;
 			while ((line = buffer.readLine()) != null) {
 				String[] uriToServlet = line.split("->");
-				if (uriToServlet[0].equals(uri)){
+				if (uriToServlet[0].equals(uri.substring(0, servletUriLimit))){
 					return uriToServlet[1];
 				}
 			}
@@ -64,7 +65,7 @@ public class ServletRequestProcessor implements RequestProcessor {
 		return servletClass.newInstance();
 	}
 
-	private void sendNotFound(HttpRequest req, HttpResponse resp) {
+	public void sendNotFound(HttpRequest req, HttpResponse resp) {
 
 		resp.clear();
 		resp.setProtocol(req.getProtocol());

@@ -22,11 +22,17 @@ public class HelloServlet implements Servlet{
 	public void service(HttpRequest req, HttpResponse resp)
 			throws ServletException, IOException {
 		
+		String greetee;
+		if(req.getParameterMap().get("name")!=null)
+			greetee = req.getParameterMap().get("name")[0];
+		else
+			greetee = "World";
+		
 		resp.setProtocol(req.getProtocol());
 		resp.setStatus("200 OK");
 		resp.generateStatusLine();
 		resp.generateHeaders();
-		resp.append("<h2>Hello World!</h2>");
+		resp.append("<h2>Hello " + greetee + "!</h2>");
 		resp.send();
 	}
 
