@@ -42,27 +42,46 @@ public class HttpServer {
 		while (true) {
 			try {
 				System.out.println("Waiting for a connection ...");
-				Socket socket = server.accept();
+				final Socket socket = server.accept();
 
 				System.out.println("\n" + ++i + ". Got a connection with "
 						+ socket.getInetAddress().toString());
 
-				HttpRequest req = new HttpRequest(socket.getInputStream());
-				HttpResponse resp = new HttpResponse(socket.getOutputStream());
+				Thread connection = new Thread() {
+					@Override
+					public void run() {
 
-				RequestProcessor processor;
+						try {
+							HttpRequest req = new HttpRequest(
+									socket.getInputStream());
+							HttpResponse resp = new HttpResponse(
+									socket.getOutputStream());
 
-				if (req != null && req.getUri().startsWith("/st/")) {
-					processor = new StaticResourseRequestProcessor();
-				} else {
-					processor = new ServletRequestProcessor();
-				}
+							RequestProcessor processor;
 
-				processor.process(req, resp);
+							if (req != null && req.getUri().startsWith("/st/")) {
+								processor = new StaticResourseRequestProcessor();
+							} else {
+								processor = new ServletRequestProcessor();
+							}
 
-				System.out.println("Succcesfully sent a responce." + '\n');
+							processor.process(req, resp);
 
-				socket.close();
+							System.out
+									.println("Succcesfully sent a responce." + '\n');
+
+							socket.close();
+						} catch (IOException e) {
+							System.err.println("Something went wrong :(");
+							e.printStackTrace();
+						}
+					}
+				};
+				
+				//double time = System.currentTimeMillis();
+				connection.start();
+				//System.out.println("\ntime not listening: " + (System.currentTimeMillis() - time) + "msec.\n");
+
 			} catch (IOException e) {
 				System.err.println("Something went wrong :(");
 				e.printStackTrace();
