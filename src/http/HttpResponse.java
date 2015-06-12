@@ -73,6 +73,7 @@ public class HttpResponse implements ServletResponse {
 		while ((line = res.readLine()) != null)
 			raw.append(line + '\n');
 
+		res.close();
 		send();
 	}
 

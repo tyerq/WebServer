@@ -64,7 +64,7 @@ public class PostServlet implements Servlet {
 		
 		resp.append("<form method='POST'>\n\t\t");
 		resp.append("<input type='text' name='author' placeholder='author'/>\n\t\t");
-		resp.append("<br>textarea name='post' cols='26' rows='5'/></textarea>\n\t\t");
+		resp.append("<br><textarea name='post' cols='26' rows='5'/></textarea>\n\t\t");
 		resp.append("<br><input type='submit' value='Add!'/>\n\t");
 		resp.append("</form>\n");
 		

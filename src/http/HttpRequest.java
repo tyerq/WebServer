@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
@@ -153,8 +154,16 @@ public class HttpRequest implements ServletRequest {
 			int dev = param.indexOf('=');
 			// System.err.println("req: " + param.substring(0, dev)+ ": " +
 			// param.substring(dev + 1));
-			parameters.put(param.substring(0, dev), param.substring(dev + 1)
-					.split(","));
+			String name = param.substring(0, dev);
+			String values = null;
+			try {
+				values = URLDecoder.decode(param.substring(dev + 1), "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			parameters.put(name, values.split(","));
 		}
 	}
 
