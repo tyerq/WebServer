@@ -48,26 +48,27 @@ public class PostServlet implements Servlet {
 		resp.generateStatusLine();
 		resp.generateHeaders();
 		
-		resp.append("<html>");
-		resp.append("<head>\n\r\t<title>Forum</title>\n\r</head>");
-		resp.append("<body>\n\r\t");
-		resp.append("<h1>Forum about nothing</h1>");
+		resp.append("<!DOCTYPE html>\n");
+		resp.append("<html>\n");
+		resp.append("<head>\n\t<title>Forum</title>\n</head>\n");
+		resp.append("<body>\n\t");
+		resp.append("<h1>Forum about nothing</h1>\n\t");
 		for(Post p : posts){
 			//System.err.println(posts.toString());
 			//System.err.println("ps: " + p.author + ": " + p.post);
-			resp.append("<div>\n\r\t");
-			resp.append("<div>Author: " + p.author + ".</div>\n\r\t");
-			resp.append("<div>" + p.post + ".</div>\n\r");
-			resp.append("</div><br><br>");
+			resp.append("<div>\n\t\t");
+			resp.append("<div>Author: " + p.author + "</div>\n\t\t");
+			resp.append("<div>\n\t\t\t" + p.post + "\n\t\t</div>\n\t");
+			resp.append("</div>\n\t");
 		}
 		
-		resp.append("<form method='POST'>\n\r\t");
-		resp.append("<input type='text' name='author'/>\n\r\t");
-		resp.append("<input type='text' name='post' rows=5/>\n\r");
-		resp.append("<input type='submit'/>\n\r");
-		resp.append("</form><br><br>");
+		resp.append("<form method='POST'>\n\t\t");
+		resp.append("<input type='text' name='author' placeholder='author'/>\n\t\t");
+		resp.append("<br>textarea name='post' cols='26' rows='5'/></textarea>\n\t\t");
+		resp.append("<br><input type='submit' value='Add!'/>\n\t");
+		resp.append("</form>\n");
 		
-		resp.append("\n\r</body>");
+		resp.append("</body>\n");
 		resp.append("</html>");
 		
 		resp.send();
