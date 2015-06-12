@@ -1,12 +1,12 @@
 package http;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HttpServer {
 
@@ -38,6 +38,7 @@ public class HttpServer {
 	protected void run() {
 		System.out.println("Server running ...\n");
 
+		ExecutorService pool = Executors.newFixedThreadPool(10);
 		int i = 0;
 		while (true) {
 			try {
@@ -79,7 +80,7 @@ public class HttpServer {
 				};
 				
 				//double time = System.currentTimeMillis();
-				connection.start();
+				pool.execute(connection);
 				//System.out.println("\ntime not listening: " + (System.currentTimeMillis() - time) + "msec.\n");
 
 			} catch (IOException e) {
