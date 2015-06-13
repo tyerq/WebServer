@@ -72,9 +72,10 @@ public class ServletRequestProcessor implements RequestProcessor {
 		resp.setStatus("404 Not Found");
 		resp.generateStatusLine();
 		resp.generateHeaders();
-		resp.append("<html>");
-		resp.append("<head>\n\r\t<title>404</title>\n\r</head>");
-		resp.append("<body>\n\r\t<h1>404 nothing found at this url :(</h1>\n\r</body>");
+		resp.append("<!DOCTYPE html>\n");
+		resp.append("<html>\n");
+		resp.append("<head>\n\t<title>404</title>\n</head>\n");
+		resp.append("<body>\n\t<h1>404 nothing found at this url :(</h1>\n</body>\n");
 		resp.append("</html>");
 		resp.send();
 	}

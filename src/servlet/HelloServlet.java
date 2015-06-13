@@ -32,7 +32,7 @@ public class HelloServlet implements Servlet{
 		resp.setStatus("200 OK");
 		resp.generateStatusLine();
 		resp.generateHeaders();
-		resp.append("<h2>Hello " + greetee + "!</h2>");
+		resp.append("<!DOCTYPE html>\n<h2>Hello " + greetee + "!</h2>");
 		resp.send();
 	}
 
