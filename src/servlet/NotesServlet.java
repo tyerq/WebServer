@@ -4,9 +4,7 @@ import http.HttpRequest;
 import http.HttpResponse;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
@@ -16,31 +14,18 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import servlet.PostServlet.Post;
+import service.NotesService;
+import service.NotesServiceImpl;
+import domain.Note;
 
 public class NotesServlet implements Servlet {
 
-	class Note {
-		String title;
-		String created;
-		String edited;
-		String note;
-
-		public Note(String title, String note) {
-			this.title = title;
-			this.created = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy")
-					.format(new Date());
-			this.edited = "";
-			this.note = note;
-		}
-	}
-
-	private static ArrayList<Note> notes;
+	private static NotesService notes;
 
 	@Override
 	public void init(ServletConfig arg0) throws ServletException {
 		if (notes == null)
-			notes = new ArrayList<Note>();
+			notes = new NotesServiceImpl();
 	}
 
 	public void service(HttpRequest req, HttpResponse resp)
@@ -52,6 +37,8 @@ public class NotesServlet implements Servlet {
 			readNote(req, resp);
 		else if (req.getUri().endsWith("edit"))
 			editNote(req, resp);
+		else if (req.getUri().endsWith("delete"))
+			deleteNote(req, resp);
 		else
 			sendNotFound(req, resp);
 
@@ -60,8 +47,8 @@ public class NotesServlet implements Servlet {
 	private void showAll(HttpRequest req, HttpResponse resp) {
 
 		Map<String, String[]> params = req.getParameterMap();
-		if (params.containsKey("title") && params.containsKey("note"))
-			addNote(params.get("title")[0], params.get("note")[0]);
+		if (params.containsKey("title") && params.containsKey("text"))
+			notes.addNote(params.get("title")[0], params.get("text")[0]);
 
 		resp.setProtocol(req.getProtocol());
 		resp.setStatus("200 OK");
@@ -73,18 +60,18 @@ public class NotesServlet implements Servlet {
 		resp.append("<head>\n\t<title>Notes</title>\n</head>\n");
 		resp.append("<body>\n\t");
 		resp.append("<h1>All notes</h2>\n\t");
-		for (int i = 0; i < notes.size(); i++) {
+		for (Note note : notes.getAllNotes()) {
 			resp.append("<div>\n\t\t");
-			resp.append("<a href='/notes/read?num=" + i + "'>read</a>\t|\t"
-					+ notes.get(i).created + "\t|\t" + notes.get(i).title
-					+ "</div>\n\t\t");
+			resp.append("<a href='/notes/read?id=" + note.getId()
+					+ "'>read</a>\t|\t" + note.getCreated() + "\t|\t"
+					+ note.getTitle() + "</div>\n\t\t");
 			resp.append("</div>\n\t");
 		}
 
 		resp.append("<form method='POST'>\n\t\t");
 		resp.append("<input type='text' name='title' placeholder='title'/>\n\t\t");
-		resp.append("<br><textarea name='note' cols='26' rows='5'/></textarea>\n\t\t");
-		resp.append("<br><input type='submit' value='Add!'/>\n\t");
+		resp.append("<br><textarea name='text' cols='26' rows='5'/></textarea>\n\t\t");
+		resp.append("<br><input type='submit' value='add'/>\n\t");
 		resp.append("</form>\n");
 
 		resp.append("</body>\n");
@@ -101,12 +88,16 @@ public class NotesServlet implements Servlet {
 		resp.generateStatusLine();
 		resp.generateHeaders();
 
-		int num = -1;
-		Note note = null;
+		String id = "";
 		try {
-			num = Integer.parseInt(req.getParameterMap().get("num")[0]);
-			note = notes.get(num);
-		} catch (NumberFormatException | IndexOutOfBoundsException e) {
+			id = req.getParameterMap().get("id")[0];
+		} catch (NumberFormatException e) {
+			resp.append("No such note!");
+			resp.send();
+			return;
+		}
+		Note note = notes.getNote(id);
+		if (note == null) {
 			resp.append("No such note!");
 			resp.send();
 			return;
@@ -117,15 +108,25 @@ public class NotesServlet implements Servlet {
 		resp.append("<head>\n\t<title>Notes</title>\n</head>\n");
 		resp.append("<body>\n\t");
 		resp.append("<a href='/notes'>back</a>\n\t");
-		resp.append("<h2>" + note.title + "</h2>\n\t");
-		resp.append("<h6>" + note.created + "</h6>\n\t");
-		if (!note.edited.equals(""))
-			resp.append("<h6>edited:\t" + note.edited + "</h6>\n\t");
+		resp.append("<h2>" + note.getTitle() + "</h2>\n\t");
+		resp.append("<h6>" + note.getCreated() + "</h6>\n\t");
+		if (note.getEdited() != null)
+			resp.append("<h6>edited:\t" + note.getEdited() + "</h6>\n\t");
 		resp.append("<form method='POST' action='/notes/edit'>\n\t\t");
-		resp.append("<textarea name='note' cols='46' rows='10'/>" + note.note
-				+ "</textarea>\n\t\t");
-		resp.append("<br><input type='hidden' name='num' value='" + num + "'/>\n\t");
+		resp.append("<br><input type='text' name='title' value='"
+				+ note.getTitle() + "'/>\n\t");
+		resp.append("<br><textarea name='text' cols='46' rows='10'/>"
+				+ note.getText() + "</textarea>\n\t\t");
+		resp.append("<br><input type='hidden' name='id' value='" + note.getId()
+				+ "'/>\n\t");
 		resp.append("<br><input type='submit' value='edit'/>\n\t");
+		resp.append("</form>\n");
+		
+
+		resp.append("<form method='POST' action='/notes/delete'>\n\t\t");
+		resp.append("<br><input type='hidden' name='id' value='" + note.getId()
+				+ "'/>\n\t");
+		resp.append("<input type='submit' value='delete'/>\n\t");
 		resp.append("</form>\n");
 
 		resp.send();
@@ -133,16 +134,17 @@ public class NotesServlet implements Servlet {
 
 	private void editNote(HttpRequest req, HttpResponse resp) {
 
-		int num = -1;
-		Note note = null;
+		String id = "";
 		try {
 			Map<String, String[]> params = req.getParameterMap();
-			num = Integer.parseInt(params.get("num")[0]);
-			note = notes.get(num);
-			note.edited = new SimpleDateFormat("HH:mm:ss dd/MM/yyyy")
-			.format(new Date());
-			note.note = params.get("note")[0];
-		} catch (NullPointerException | NumberFormatException | IndexOutOfBoundsException e) {
+			id = params.get("id")[0];
+			Note note = new Note(id);
+			note.setEdited(new SimpleDateFormat("HH:mm:ss dd/MM/yyyy")
+					.format(new Date()));
+			note.setTitle(params.get("title")[0]);
+			note.setText(params.get("text")[0]);
+			notes.editNote(note);
+		} catch (NullPointerException | NumberFormatException e) {
 			resp.append("No such note!");
 			resp.send();
 			return;
@@ -152,8 +154,21 @@ public class NotesServlet implements Servlet {
 
 	}
 
-	private void addNote(String title, String note) {
-		notes.add(new Note(title, note));
+	private void deleteNote(HttpRequest req, HttpResponse resp) {
+
+		String id = "";
+		try {
+			Map<String, String[]> params = req.getParameterMap();
+			id = params.get("id")[0];
+			notes.deleteNote(id);
+		} catch (NullPointerException | NumberFormatException e) {
+			resp.append("No such note!");
+			resp.send();
+			return;
+		}
+
+		showAll(req, resp);
+
 	}
 
 	private void sendNotFound(HttpRequest req, HttpResponse resp) {

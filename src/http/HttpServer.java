@@ -48,7 +48,8 @@ public class HttpServer {
 				System.out.println("\n" + ++i + ". Got a connection with "
 						+ socket.getInetAddress().toString());
 
-				Thread connection = new Thread() {
+				Runnable connection = new Runnable() {
+					
 					@Override
 					public void run() {
 
@@ -80,7 +81,7 @@ public class HttpServer {
 				};
 				
 				//double time = System.currentTimeMillis();
-				pool.execute(connection);
+				pool.submit(connection);
 				//System.out.println("\ntime not listening: " + (System.currentTimeMillis() - time) + "msec.\n");
 
 			} catch (IOException e) {

@@ -14,16 +14,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 public class PostServlet implements Servlet {
-
-	class Post{
-		String author;
-		String post;
-		
-		public Post(String author, String post) {
-			this.author = author;
-			this.post = post;
-		}
-	}
 	
 	private static ArrayList<Post> posts;
 	
